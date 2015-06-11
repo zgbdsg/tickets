@@ -6,6 +6,7 @@ from os import path
 import os
 import requests
 import cPickle as cp
+import json
 
 class TicketSpider(CrawlSpider):
     name = 'ticket'
@@ -18,28 +19,85 @@ class TicketSpider(CrawlSpider):
 
     def __init__(self):
         print __file__
-        requests.packages.urllib3.disable_warnings()
+        #requests.packages.urllib3.disable_warnings()
         path = os.path.abspath('./ticket/data/station_list.pkl')
         fstation_list =  open(path,"rb")
         self.slist = cp.load(fstation_list)
-        path = os.path.abspath('./ticket/data/trains.csv')
+        self.slen = len(self.slist)
+        path = os.path.abspath('./ticket/data/trains-20150611.csv')
         self.ftrains = open(path,"w")
         # log.init_log('./log/train')
         self.td = []
         self.from_index = 0
-        self.to_index = 0
+        self.to_index = 1
         self.start_urls = ["https://kyfw.12306.cn/otn/lcxxcx/query?"\
                            "purpose_codes=ADULT&queryDate=2015-06-26&"\
                            "from_station=%s&to_station=%s"%(self.slist[self.from_index],self.slist[self.to_index])]
+
+        self.black_list = [0]*self.slen
+
+        for i in xrange(self.slen):
+            self.black_list[i] = [0]*self.slen
+            self.black_list[i][i] = 1
         pass
 
     def parse(self, response):
         """
         default parse method, rule is not useful now
         """
-        print response
-        url = ""
-        yield Request(url, callback=self.parse)
+        #print response.body
+        #url = ""
+        #yield Request(url, callback=self.parse)
+        traindict = json.loads(response.body)
+        # print traindict
+        if traindict == -1:
+            return self.nextreq(-1)
+
+        status = traindict["status"]
+        httpstatus = traindict["httpstatus"]
+        # print status,httpstatus
+        if status == True and httpstatus == 200:
+            if not "datas" in traindict["data"]:
+                return self.nextreq(-1)
+            for train in traindict["data"]["datas"]:
+                if not train["train_no"] in self.td:
+                    list = []
+                    list.append(train["train_no"])
+                    list.append(train["station_train_code"])
+                    list.append(train["start_station_telecode"])
+                    list.append(train["end_station_telecode"])
+                    self.ftrains.write(",".join(list)+"\n")
+                    self.td.append(train["train_no"])
+            return self.nextreq(0)
+        else:
+            log.error("from %s to %s error!"%(start,end))
+            return self.nextreq(-1)
+        
+    def nextreq(self, type):
+        if type == -1:
+            self.black_list[self.to_index][self.from_index] = 1
+        
+        while True:
+            self.to_index += 1
+            if self.to_index >= self.slen:
+                self.from_index += 1
+                self.to_index = self.to_index % self.slen
+            if self.from_index >= self.slen:
+                return None
+            if  self.black_list[self.from_index][self.to_index] == 0:
+                break
+
+
+        url = "https://kyfw.12306.cn/otn/lcxxcx/query?"\
+                           "purpose_codes=ADULT&queryDate=2015-06-26&"\
+                           "from_station=%s&to_station=%s"%(self.slist[self.from_index],self.slist[self.to_index])
+        request = Request(url, callback= self.parse, errback=self.pro_error)
+        return request
+
+    def pro_error(self, failure):
+        print "%s to %s error"%(self.slist[self.from_index],self.slist[self.to_index])
+        self.nextreq(0)
+        pass
 
     def determine_level(self, response):
         """
