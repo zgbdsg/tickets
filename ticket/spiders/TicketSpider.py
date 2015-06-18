@@ -24,12 +24,23 @@ class TicketSpider(CrawlSpider):
         fstation_list =  open(path,"rb")
         self.slist = cp.load(fstation_list)
         self.slen = len(self.slist)
+
+        #init td
         path = os.path.abspath('./ticket/data/trains-20150611.csv')
-        self.ftrains = open(path,"w")
-        # log.init_log('./log/train')
+        self.ftrains = open(path,"r")
         self.td = []
-        self.from_index = 0
-        self.to_index = 1
+        for line in self.ftrains:
+            items = line.strip().split(',')
+            self.td.append(items[1])
+        self.ftrains.close()
+
+
+        #append to write train file
+        self.ftrains = open(path,"a")
+
+        self.from_index = self.slist.index('DTV')
+        self.to_index = self.slist.index('MOM')
+
         self.start_urls = ["https://kyfw.12306.cn/otn/lcxxcx/query?"\
                            "purpose_codes=ADULT&queryDate=2015-06-26&"\
                            "from_station=%s&to_station=%s"%(self.slist[self.from_index],self.slist[self.to_index])]
