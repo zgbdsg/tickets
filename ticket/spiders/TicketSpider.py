@@ -26,7 +26,7 @@ class TicketSpider(CrawlSpider):
         self.slen = len(self.slist)
 
         #init td
-        path = os.path.abspath('./ticket/data/trains-20150611.csv')
+        path = os.path.abspath('./ticket/data/trains-20150704.csv')
         self.ftrains = open(path,"r")
         self.td = []
         for line in self.ftrains:
@@ -38,8 +38,11 @@ class TicketSpider(CrawlSpider):
         #append to write train file
         self.ftrains = open(path,"a")
 
-        self.from_index = self.slist.index('DTV')
-        self.to_index = self.slist.index('MOM')
+#        self.from_index = self.slist.index('DTV')
+#        self.to_index = self.slist.index('MOM')
+
+        self.from_index = 0
+        self.to_index = 1
 
         self.start_urls = ["https://kyfw.12306.cn/otn/lcxxcx/query?"\
                            "purpose_codes=ADULT&queryDate=2015-06-26&"\
@@ -77,6 +80,9 @@ class TicketSpider(CrawlSpider):
                     list.append(train["station_train_code"])
                     list.append(train["start_station_telecode"])
                     list.append(train["end_station_telecode"])
+                    list.append(train["start_time"])
+                    list.append(train["arrive_time"])
+                    list.append(train["lishi"])
                     self.ftrains.write(",".join(list)+"\n")
                     self.td.append(train["train_no"])
             return self.nextreq(0)
