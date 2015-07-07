@@ -37,15 +37,17 @@ class TicketSpider(CrawlSpider):
 
         #append to write train file
         self.ftrains = open(path,"a")
+        #self.ftrains.write("\n"*1000)
+        #self.ftrains.flush()
 
-#        self.from_index = self.slist.index('DTV')
-#        self.to_index = self.slist.index('MOM')
+        self.from_index = self.slist.index('JJG')
+        self.to_index = self.slist.index('MEY')
 
-        self.from_index = 0
-        self.to_index = 1
+#        self.from_index = 0
+#        self.to_index = 1
 
         self.start_urls = ["https://kyfw.12306.cn/otn/lcxxcx/query?"\
-                           "purpose_codes=ADULT&queryDate=2015-06-26&"\
+                           "purpose_codes=ADULT&queryDate=2015-07-10&"\
                            "from_station=%s&to_station=%s"%(self.slist[self.from_index],self.slist[self.to_index])]
 
         self.black_list = [0]*self.slen
@@ -83,8 +85,11 @@ class TicketSpider(CrawlSpider):
                     list.append(train["start_time"])
                     list.append(train["arrive_time"])
                     list.append(train["lishi"])
+                    list = [str(x) for x in list]
                     self.ftrains.write(",".join(list)+"\n")
                     self.td.append(train["train_no"])
+
+            self.ftrains.flush()
             return self.nextreq(0)
         else:
             log.error("from %s to %s error!"%(start,end))
@@ -106,7 +111,7 @@ class TicketSpider(CrawlSpider):
 
 
         url = "https://kyfw.12306.cn/otn/lcxxcx/query?"\
-                           "purpose_codes=ADULT&queryDate=2015-06-26&"\
+                           "purpose_codes=ADULT&queryDate=2015-07-10&"\
                            "from_station=%s&to_station=%s"%(self.slist[self.from_index],self.slist[self.to_index])
         request = Request(url, callback= self.parse, errback=self.pro_error)
         return request

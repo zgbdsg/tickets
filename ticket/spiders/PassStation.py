@@ -20,15 +20,15 @@ class TicketSpider(CrawlSpider):
     def __init__(self):
         print __file__
         #requests.packages.urllib3.disable_warnings()
-        self.format = "https://kyfw.12306.cn/otn/czxx/queryByTrainNo?train_no=%s&from_station_telecode=%s&to_station_telecode=%s&depart_date=2015-06-20"
-        path = os.path.abspath('./ticket/data/trains-20150615.csv')
+        self.format = "https://kyfw.12306.cn/otn/czxx/queryByTrainNo?train_no=%s&from_station_telecode=%s&to_station_telecode=%s&depart_date=2015-07-10"
+        path = os.path.abspath('./ticket/data/trains.csv')
         ftrain_list =  open(path,"r")
         self.start_urls = []
         for line in ftrain_list:
             items = line.strip().split(",")
             self.start_urls.append(self.format%(items[0],items[2],items[3]))
 
-        path = os.path.abspath('./ticket/data/PassStation-20150615.csv')
+        path = os.path.abspath('./ticket/data/PassStation-20150706.csv')
         self.ftrains = open(path,"w")
         pass
 
